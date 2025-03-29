@@ -114,7 +114,7 @@ if uploaded_file:
                     شما یک مترجم حرفه‌ای هستید. متن زیر را به فارسی روان ترجمه کنید:
                     {text}
                     """
-                    translated = client.text_generation(prompt, max_new_tokens=3000)
+                    translated = client.text_generation(prompt, max_new_tokens=50000)
                     time.sleep(2)  # جلوگیری از Rate Limit
                 else:
                     openai.api_key = os.getenv("OPENAI_API_KEY")
