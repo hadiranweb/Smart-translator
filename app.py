@@ -48,22 +48,26 @@ def create_pdf(text, filename="ترجمه.pdf"):
     return pdf_path
 
 def extract_text_from_file(uploaded_file, file_type):
-    text = ""
-    if file_type == "PDF":
-        doc = fitz.open(stream=uploaded_file.read(), filetype="pdf")
-        for page in doc:
-            text += page.get_text()
-    elif file_type == "زیرنویس (SRT)":
-        content = uploaded_file.read().decode("utf-8")
-        # پارسر ساده برای فایل SRT
-        blocks = content.split('\n\n')
-        for block in blocks:
-            lines = block.split('\n')
-            if len(lines) >= 3:
-                text += lines[2] + "\n"  # فقط متن زیرنویس
-    else:  # فایل متنی ساده
-        text = uploaded_file.read().decode("utf-8")
-    return text
+    try:
+        uploaded_file.seek(0)  # مهم: reset file pointer
+        if file_type == "PDF":
+            try:
+                doc = fitz.open(stream=uploaded_file.read(), filetype="pdf")
+                return "\n".join([page.get_text() for page in doc])
+            except Exception as e:
+                st.error(f"خطا در خواندن PDF: {str(e)}")
+                return ""
+        
+        elif file_type == "زیرنویس (SRT)":
+            content = uploaded_file.read().decode("utf-8")
+            return "\n".join([block.split('\n')[2] for block in content.split('\n\n') if len(block.split('\n')) >= 3])
+        
+        else:  # متن ساده
+            return uploaded_file.read().decode("utf-8")
+    
+    except Exception as e:
+        st.error(f"خطای پردازش فایل: {str(e)}")
+        return ""
 
 # --- نوار کناری برای تنظیمات ---
 with st.sidebar:
@@ -103,7 +107,7 @@ if uploaded_file:
                 # ترجمه
                 if model_choice == "DeepSeek (رایگان)":
                     client = InferenceClient(
-                        model="arvan/DeepSeek-VL-7B-v1.5-fa",
+                        model="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
                         token=os.getenv("HUGGINGFACE_TOKEN")
                     )
                     prompt = f"""
